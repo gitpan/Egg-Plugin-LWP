@@ -1,0 +1,17 @@
+use Module::Build;
+
+my $builder = Module::Build->new(
+  module_name => 'Egg::Plugin::LWP',
+  license => 'perl',
+  dist_author => 'Masatoshi Mizuno E<lt>mizunoE<64>bomcity.comE<gt>',
+  dist_version_from=> 'lib/Egg/Plugin/LWP.pm',
+  requires => {
+    'LWP::UserAgent' => 0,
+    'HTTP::Response' => 0,
+    'HTTP::Request::Common' => 0,
+    'Test::More' => 0,
+    'Test::Pod'  => 0,
+    },
+  );
+
+$builder->create_build_script();

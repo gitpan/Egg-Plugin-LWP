@@ -1,0 +1,18 @@
+abstract: LWP for Egg.
+author: Masatoshi Mizuno <mizunoE<64>bomcity.com>
+build_requires: 
+  Test::More: 0
+  Test::Pod: 0
+distribution_type: module
+generated_by: Module::Install version 0.64
+license: perl
+name: Egg-Plugin-LWP
+no_index: 
+  directory: 
+    - inc
+    - t
+requires: 
+  HTTP::Request::Common: 0
+  HTTP::Response: 0
+  LWP::UserAgent: 0
+version: 0.03
