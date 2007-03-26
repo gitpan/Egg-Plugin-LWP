@@ -3,13 +3,13 @@ package Egg::Plugin::LWP;
 # Copyright (C) 2006 Bee Flag, Corp, All Rights Reserved.
 # Masatoshi Mizuno E<lt>mizunoE<64>bomcity.comE<gt>
 #
-# $Id: LWP.pm 56 2007-03-21 07:06:53Z lushe $
+# $Id: LWP.pm 62 2007-03-25 08:36:07Z lushe $
 #
 use strict;
 use LWP::UserAgent;
 use HTTP::Request::Common qw/GET POST/;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub setup {
 	my($e)= @_;
