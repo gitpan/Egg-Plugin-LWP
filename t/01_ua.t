@@ -1,24 +1,25 @@
 
-use Test::More qw/no_plan/;
-use Egg::Helper;
+use Test::More tests => 12;
+use Egg::Helper::VirtualTest;
 
-my $test= Egg::Helper->run('O:Test');
+my $test= Egg::Helper::VirtualTest->new(
+  prepare => { controller => { egg_includes=> [qw/ LWP /] } }
+  );
 
-$test->prepare({ controller=> { egg=> 'LWP' } });
+ok my $e= $test->egg_context;
+can_ok $e,     qw/ ua /;
+can_ok $e->ua, qw/ new request simple_request /;
+isa_ok $e->ua,       'Egg::Plugin::LWP::handler';
+isa_ok $e->ua->{ua}, 'LWP::UserAgent',
 
-my $e= $test->egg_virtual;
+ok my($self, $method, $url, $args)=
+   Egg::Plugin::LWP::handler::_get_args
+      ($e, POST=> 'http://domainname/', { param1=> 'test1' });
 
-ok my $ua= $e->ua;
-ok ref($ua) eq 'LWP::UserAgent';
-like $ua->agent, qr{Egg\:\:Plugin\:\:LWP\s+v[\d\.]+};
-ok $ua->timeout == 10;
-ok my($self, $lua, $method, $url, $args)= Egg::Plugin::LWP::args::get
-    ( $e, 0, POST=> 'http://domainname/', { param1=> 'test1' } );
-ok ref($lua) eq 'LWP::UserAgent';
-ok $method eq 'POST';
-ok $url eq 'http://domainname/';
-ok ref($args) eq 'HASH';
-ok $args->{param1};
-ok $args->{param1} eq 'test1';
-ok my $res= $e->ua_request($ua, GET=> 'http://dummy');
-ok ref($res) eq 'HTTP::Response';
+is $method, 'POST';
+is $url,    'http://domainname/';
+isa_ok $args, 'HASH';
+is $args->{param1}, 'test1';
+ok my $res= $e->ua->request( GET => 'http://dummy');
+isa_ok $res, 'HTTP::Response';
+

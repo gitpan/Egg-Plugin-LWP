@@ -1,5 +1,8 @@
 Revision history for Perl extension Egg::Plugin::LWP.
 
+2.00  2007/05/02
+	- Corresponded to Egg::Release v2.00.
+
 0.03  2007/03/25
 	- bugfix.
 	- Maintenance for Pod coverage.

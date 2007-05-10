@@ -1,148 +1,165 @@
 package Egg::Plugin::LWP;
-#
-# Copyright (C) 2006 Bee Flag, Corp, All Rights Reserved.
-# Masatoshi Mizuno E<lt>mizunoE<64>bomcity.comE<gt>
-#
-# $Id: LWP.pm 62 2007-03-25 08:36:07Z lushe $
-#
-use strict;
-use LWP::UserAgent;
-use HTTP::Request::Common qw/GET POST/;
-
-our $VERSION = '0.04';
-
-sub setup {
-	my($e)= @_;
-	$e->config->{plugin_lwp} ||= {};
-	$e->config->{plugin_lwp}{timeout} ||= 10;
-	$e->config->{plugin_lwp}{agent} ||= __PACKAGE__. " v$VERSION";
-	$e->next::method;
-}
-sub ua {
-	my $e= shift;
-	my %opt= %{$e->config->{plugin_lwp}};
-	if (@_) {
-		my $args= ref($_[0]) ? $_[0]: {@_};
-		@opt{keys %$args}= values %$args;
-	}
-	LWP::UserAgent->new(%opt);
-}
-sub ua_request {
-	my($e, $ua, $method, $url, $args)= Egg::Plugin::LWP::args::get(@_);
-	no strict 'refs';  ## no critic
-	$ua->request( &{$method}($url, %$args) );
-}
-sub ua_simple_request {
-	my($e, $ua, $method, $url, $args)= Egg::Plugin::LWP::args::get(@_);
-	no strict 'refs';  ## no critic
-	$ua->simple_request( &{$method}($url, %$args) );
-}
-
-package Egg::Plugin::LWP::args;
-use strict;
-sub get {
-	my $e = shift;
-	my $ua= shift || $e->ua;
-	my $meth= uc(shift) || 'GET';
-	my $url = shift || Egg::Error->throw(q/I want URL/);
-	my $args= shift || {};
-	return ($e, $ua, $meth, $url, $args);
-}
-
-1;
-
-__END__
 
 =head1 NAME
 
-Egg::Plugin::LWP - LWP for Egg.
+Egg::Plugin::LWP - LWP for Egg Plugin.
 
 =head1 SYNOPSIS
 
-  package [MYPROJECT]
-  use strict;
-  use Egg qw/LWP/;
+  use Egg qw/ LWP /;
+  
+  __PACKAGE__->egg_startup(
+   ...
+   .....
+  
+   plugin_lwp => {
+     timeout => 10,
+     agent   => 'MyApp Agent.',
+     },
+  
+    );
 
-Configuration is setup.
-
-  plugin_lwp=> {
-    timeout=> 10,
-    agent  => 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
-    },
-
-* This item will set the option to pass to L<LWP::UserAgent>.
-
-Example of code.
-
-  my $response= $e->ua->get( 'http://yyyyyy.com/' );
+  # The GET request is sent.
+  my $res= $e->ua->request( GET => 'http://domain.name/hoge/' );
   
-    or
+  # The POST request is sent.
+  my $res= $e->ua->request( POST => 'http://domain.name/hoge/form', {
+    param1 => 'hooo',
+    param2 => 'booo',
+    } );
   
-  my $response= $e->ua_request(0, POST=> 'http:/domain/form.cgi', {
-    param1=> 'param string1',
-    param2=> 'param string2',
-    });
+  # It requests it GET doing to pass ua the option.
+  my $res= $e->ua( agent => 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)' )
+             ->request( GET => 'http://domain.name/hoge/' );
   
-    or
-  
-  my $ua= $e->ua;
-  $ua->proxy('http', 'http://proxy:8080');
-  $ua->cookie_jar( HTTP::Cookies->new( file=> "cookies.txt") );
-  my $response= $e->ua_request($ua, POST=> 'http:/domain/form.cgi', {
-    ...
-    });
-  
-  $response->is_success || die $response->status_line;
-  
-  my $content= $response->content || "";
-  ...
-  ...
+  # It turns by using ua made once.
+  my $ua= $e->ua( timeout => 5 );
+  for my $domain (qw/ domain1 domain2 domain3 /) {
+    my $res= $ua->request( GET => "http://$domain/" ) || next;
+    $res->is_success || next;
+    $res->...
+  }
 
 =head1 DESCRIPTION
 
-This module is wrapper of LWP::UserAgent and HTTP::Request::Common.
-Please see the document of LWP::UserAgent and HTTP::Request::Common in detail.
+It is a plugin to use L<LWP::UserAgent>.
+
+Please define HASH in 'plugin_lwp' about the setting.
+All these set values are passed to L<LWP::UserAgent>.
+
+* Please refer to the document of L<LWP::UserAgent> for the option.
+
+=cut
+use strict;
+use warnings;
+
+our $VERSION = '2.00';
+
+sub _setup {
+	my($e)= @_;
+	my $conf= $e->config->{plugin_lwp} ||= {};
+	$conf->{timeout} ||= 10;
+	$conf->{agent}   ||= __PACKAGE__. " v$VERSION";
+	$e->next::method;
+}
 
 =head1 METHODS
 
-=head2 ua ([OPTION]);
+=head2 ua ( [UA_OPTION_HASH] )
 
-LWP::UserAgent object is returned.
+The handler object of Egg::Plugin::LWP is returned.
 
-When the option is passed, the setting of the configuration is overwrited.
+When UA_OPTION_HASH is given, everything is passed to L<LWP::UserAgent> as an 
+option.
 
-=head2 ua_request ([UA], [METHOD], [URL], [PARAMS]);
+UA_OPTION_HASH overwrites a set value of default.
 
-The HTTP::Response object that LWP::UserAgent returns is returned.
+=cut
+sub ua { Egg::Plugin::LWP::handler->new(@_) }
 
-  UA     =  LWP::UserAgent object.
-  METHOD =  'GET' or 'POST'.  default is 'GET'.
-  URL    =  request URL.
-  PARAMS =  Parameter put on URL.  ( HAHS reference )
 
-=head2 ua_simple_request ([UA], [METHOD], [URL], [PARAMS]);
+package Egg::Plugin::LWP::handler;
+use strict;
+use warnings;
+use LWP::UserAgent;
+use HTTP::Request::Common qw/ GET POST /;
 
-LWP::UserAgent-E<gt>simple_request is called and the same thing as $e-E<gt>us_request is done.
+=head1 HANDLER METHODS
 
-=head2 setup
+=head2 new
 
-It is a method for the start preparation that is called from the controller of 
-the project. * Do not call it from the application.
+It is a constructor who is called by $e-E<gt>ua.
+
+L<LWP::UserAgent> object is generated here.
+
+=cut
+sub new {
+	my($class, $e)= splice @_, 0, 2;
+	my $ua= LWP::UserAgent->new(
+	  %{$e->config->{plugin_lwp}},
+	  %{$_[1] ? {@_}: ($_[0] || {})},
+	  );
+	bless { e=> $e, ua=> $ua }, $class;
+}
+
+{
+	no strict 'refs';  ## no critic
+
+=head2 request ( [REQUEST_METHOD], [URL], [ARGS_HASH] )
+
+The request is sent based on generated ua.
+
+When an invalid value to REQUEST_METHOD is passed, it treats as GET request.
+
+URL is not omissible. The exception is generated when omitting it.
+
+ARGS_HASH is treated as an argument passed to L<HTTP::Request::Common>.
+
+L<HTTP::Response> object that ua returns after completing the request is returned.
+
+  my $res= $e->ua->request(0, 'http://domain.name/');
+
+=cut
+	sub request {
+		my($self, $method, $url, $args)= _get_args(@_);
+		$self->{ua}->request( &{$method}($url, %$args) );
+	}
+
+=head2 simple_request
+
+Simple_request of L<LWP::UserAgent> is done.
+
+The argument and others is similar to 'request' method.
+
+  my $res= $e->ua->simple_request(0, 'http://domain.name/');
+
+=cut
+	sub simple_request {
+		my($self, $method, $url, $args)= _get_args(@_);
+		$self->{ua}->simple_request( &{$method}($url, %$args) );
+	}
+  };
+
+sub _get_args {
+	my $self= shift;
+	my $meth= uc(shift) || 'GET';
+	my $url = shift || die qq{ I want 'url' };
+	($self, $meth, $url, ($_[1] ? {@_}: ($_[0] || {})));
+}
 
 =head1 SEE ALSO
 
 L<LWP::UserAgent>,
 L<HTTP::Request::Common>,
-L<HTTP::Response>,
 L<Egg::Release>,
 
 =head1 AUTHOR
 
-Masatoshi Mizuno E<lt>mizunoE<64>bomcity.comE<gt>
+Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2006 by Bee Flag, Corp. E<lt>L<http://egg.bomcity.com/>E<gt>, All Rights Reserved.
+Copyright (C) 2007 by Bee Flag, Corp. E<lt>L<http://egg.bomcity.com/>E<gt>, All Rights Reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.6 or,
@@ -150,3 +167,4 @@ at your option, any later version of Perl 5 you may have available.
 
 =cut
 
+1;

@@ -6,11 +6,14 @@ my $builder = Module::Build->new(
   dist_author => 'Masatoshi Mizuno E<lt>mizunoE<64>bomcity.comE<gt>',
   dist_version_from=> 'lib/Egg/Plugin/LWP.pm',
   requires => {
-    'LWP::UserAgent' => 0,
-    'HTTP::Response' => 0,
-    'HTTP::Request::Common' => 0,
-    'Test::More' => 0,
-    'Test::Pod'  => 0,
+
+    'Egg::Release' => 2.00,
+
+    'Test::Simple'        => 0,
+    'Test::Pod'           => 0,
+    'Test::Perl::Critic'  => 0,
+    'Test::Pod::Coverage' => 0,
+
     },
   );
 
