@@ -15,4 +15,4 @@ no_index:
     - t
 requires: 
   Egg::Release: 2
-version: 2.00
+version: 2.01

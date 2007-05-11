@@ -53,7 +53,7 @@ All these set values are passed to L<LWP::UserAgent>.
 use strict;
 use warnings;
 
-our $VERSION = '2.00';
+our $VERSION = '2.01';
 
 sub _setup {
 	my($e)= @_;
