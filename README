@@ -14,6 +14,10 @@ decide whether fixes for the module are worth downloading.
 
 INSTALLATION
 
+   * Module::Install is used.
+
+   perl -MCPAN -e 'install Module::Install'
+
 To install this module type the following:
 
    perl Makefile.PL

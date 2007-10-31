@@ -1,4 +1,8 @@
 package Egg::Plugin::LWP;
+use strict;
+use warnings;
+
+our $VERSION = '2.02';
 
 =head1 NAME
 
@@ -49,20 +53,6 @@ All these set values are passed to L<LWP::UserAgent>.
 
 * Please refer to the document of L<LWP::UserAgent> for the option.
 
-=cut
-use strict;
-use warnings;
-
-our $VERSION = '2.01';
-
-sub _setup {
-	my($e)= @_;
-	my $conf= $e->config->{plugin_lwp} ||= {};
-	$conf->{timeout} ||= 10;
-	$conf->{agent}   ||= __PACKAGE__. " v$VERSION";
-	$e->next::method;
-}
-
 =head1 METHODS
 
 =head2 ua ( [UA_OPTION_HASH] )
@@ -74,16 +64,6 @@ option.
 
 UA_OPTION_HASH overwrites a set value of default.
 
-=cut
-sub ua { Egg::Plugin::LWP::handler->new(@_) }
-
-
-package Egg::Plugin::LWP::handler;
-use strict;
-use warnings;
-use LWP::UserAgent;
-use HTTP::Request::Common qw/ GET POST /;
-
 =head1 HANDLER METHODS
 
 =head2 new
@@ -91,19 +71,6 @@ use HTTP::Request::Common qw/ GET POST /;
 It is a constructor who is called by $e-E<gt>ua.
 
 L<LWP::UserAgent> object is generated here.
-
-=cut
-sub new {
-	my($class, $e)= splice @_, 0, 2;
-	my $ua= LWP::UserAgent->new(
-	  %{$e->config->{plugin_lwp}},
-	  %{$_[1] ? {@_}: ($_[0] || {})},
-	  );
-	bless { e=> $e, ua=> $ua }, $class;
-}
-
-{
-	no strict 'refs';  ## no critic
 
 =head2 request ( [REQUEST_METHOD], [URL], [ARGS_HASH] )
 
@@ -119,12 +86,6 @@ L<HTTP::Response> object that ua returns after completing the request is returne
 
   my $res= $e->ua->request(0, 'http://domain.name/');
 
-=cut
-	sub request {
-		my($self, $method, $url, $args)= _get_args(@_);
-		$self->{ua}->request( &{$method}($url, %$args) );
-	}
-
 =head2 simple_request
 
 Simple_request of L<LWP::UserAgent> is done.
@@ -134,12 +95,44 @@ The argument and others is similar to 'request' method.
   my $res= $e->ua->simple_request(0, 'http://domain.name/');
 
 =cut
+
+sub _setup {
+	my($e)= @_;
+	my $conf= $e->config->{plugin_lwp} ||= {};
+	$conf->{timeout} ||= 10;
+	$conf->{agent}   ||= __PACKAGE__. " v$VERSION";
+	$e->next::method;
+}
+sub ua { Egg::Plugin::LWP::handler->new(@_) }
+
+package Egg::Plugin::LWP::handler;
+use strict;
+use warnings;
+use LWP::UserAgent;
+use HTTP::Request::Common qw/ GET POST /;
+
+{
+	no strict 'refs';  ## no critic
+	sub request {
+		my($self, $method, $url, $args)= _get_args(@_);
+		$self->{ua}->request
+		( &{$method}($url, ($method=~m{POST} ? [%$args]: %$args) ) );
+	}
 	sub simple_request {
 		my($self, $method, $url, $args)= _get_args(@_);
-		$self->{ua}->simple_request( &{$method}($url, %$args) );
+		$self->{ua}->simple_request
+		( &{$method}($url, ($method=~m{POST} ? [%$args]: %$args) ) );
 	}
   };
 
+sub new {
+	my($class, $e)= splice @_, 0, 2;
+	my $ua= LWP::UserAgent->new(
+	  %{$e->config->{plugin_lwp}},
+	  %{$_[1] ? {@_}: ($_[0] || {})},
+	  );
+	bless { e=> $e, ua=> $ua }, $class;
+}
 sub _get_args {
 	my $self= shift;
 	my $meth= uc(shift) || 'GET';
