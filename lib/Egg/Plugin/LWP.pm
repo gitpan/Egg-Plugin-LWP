@@ -1,8 +1,13 @@
 package Egg::Plugin::LWP;
+#
+# Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
+#
+# $Id: LWP.pm 206 2007-11-03 14:11:34Z lushe $
+#
 use strict;
 use warnings;
 
-our $VERSION = '2.02';
+our $VERSION = '2.03';
 
 =head1 NAME
 
