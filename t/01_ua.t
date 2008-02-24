@@ -1,13 +1,11 @@
+use Test::More tests => 11;
+use Egg::Helper;
 
-use Test::More tests => 12;
-use Egg::Helper::VirtualTest;
+my $e= Egg::Helper->run( Vtest => {
+  vtest_plugins=> [qw/ LWP /],
+  });
 
-my $test= Egg::Helper::VirtualTest->new(
-  prepare => { controller => { egg_includes=> [qw/ LWP /] } }
-  );
-
-ok my $e= $test->egg_context;
-can_ok $e,     qw/ ua /;
+can_ok $e, 'ua';
 can_ok $e->ua, qw/ new request simple_request /;
 isa_ok $e->ua,       'Egg::Plugin::LWP::handler';
 isa_ok $e->ua->{ua}, 'LWP::UserAgent',

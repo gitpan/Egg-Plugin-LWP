@@ -2,12 +2,56 @@ package Egg::Plugin::LWP;
 #
 # Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
 #
-# $Id: LWP.pm 206 2007-11-03 14:11:34Z lushe $
+# $Id: LWP.pm 273 2008-02-24 07:11:31Z lushe $
 #
 use strict;
 use warnings;
 
-our $VERSION = '2.03';
+our $VERSION = '3.00';
+
+sub _setup {
+	my($e)= @_;
+	my $conf= $e->config->{plugin_lwp} ||= {};
+	$conf->{timeout} ||= 10;
+	$conf->{agent}   ||= __PACKAGE__. " v$VERSION";
+	$e->next::method;
+}
+sub ua { Egg::Plugin::LWP::handler->new(@_) }
+
+package Egg::Plugin::LWP::handler;
+use strict;
+use warnings;
+use LWP::UserAgent;
+use HTTP::Request::Common qw/ GET POST /;
+
+{
+	no strict 'refs';  ## no critic
+	sub request {
+		my($self, $method, $url, $args)= _get_args(@_);
+		$self->{ua}->request
+		( &{$method}($url, ($method=~m{POST} ? [%$args]: %$args) ) );
+	}
+	sub simple_request {
+		my($self, $method, $url, $args)= _get_args(@_);
+		$self->{ua}->simple_request
+		( &{$method}($url, ($method=~m{POST} ? [%$args]: %$args) ) );
+	}
+  };
+
+sub new {
+	my($class, $e)= splice @_, 0, 2;
+	my $ua= LWP::UserAgent->new(
+	  %{$e->config->{plugin_lwp}},
+	  %{$_[1] ? {@_}: ($_[0] || {})},
+	  );
+	bless { e=> $e, ua=> $ua }, $class;
+}
+sub _get_args {
+	my $self= shift;
+	my $meth= uc(shift) || 'GET';
+	my $url = shift || die qq{ I want 'url' };
+	($self, $meth, $url, ($_[1] ? {@_}: ($_[0] || {})));
+}
 
 =head1 NAME
 
@@ -99,65 +143,19 @@ The argument and others is similar to 'request' method.
 
   my $res= $e->ua->simple_request(0, 'http://domain.name/');
 
-=cut
-
-sub _setup {
-	my($e)= @_;
-	my $conf= $e->config->{plugin_lwp} ||= {};
-	$conf->{timeout} ||= 10;
-	$conf->{agent}   ||= __PACKAGE__. " v$VERSION";
-	$e->next::method;
-}
-sub ua { Egg::Plugin::LWP::handler->new(@_) }
-
-package Egg::Plugin::LWP::handler;
-use strict;
-use warnings;
-use LWP::UserAgent;
-use HTTP::Request::Common qw/ GET POST /;
-
-{
-	no strict 'refs';  ## no critic
-	sub request {
-		my($self, $method, $url, $args)= _get_args(@_);
-		$self->{ua}->request
-		( &{$method}($url, ($method=~m{POST} ? [%$args]: %$args) ) );
-	}
-	sub simple_request {
-		my($self, $method, $url, $args)= _get_args(@_);
-		$self->{ua}->simple_request
-		( &{$method}($url, ($method=~m{POST} ? [%$args]: %$args) ) );
-	}
-  };
-
-sub new {
-	my($class, $e)= splice @_, 0, 2;
-	my $ua= LWP::UserAgent->new(
-	  %{$e->config->{plugin_lwp}},
-	  %{$_[1] ? {@_}: ($_[0] || {})},
-	  );
-	bless { e=> $e, ua=> $ua }, $class;
-}
-sub _get_args {
-	my $self= shift;
-	my $meth= uc(shift) || 'GET';
-	my $url = shift || die qq{ I want 'url' };
-	($self, $meth, $url, ($_[1] ? {@_}: ($_[0] || {})));
-}
-
 =head1 SEE ALSO
 
+L<Egg::Release>,
 L<LWP::UserAgent>,
 L<HTTP::Request::Common>,
-L<Egg::Release>,
 
 =head1 AUTHOR
 
 Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 by Bee Flag, Corp. E<lt>L<http://egg.bomcity.com/>E<gt>, All Rights Reserved.
+Copyright (C) 2008 Bee Flag, Corp. E<lt>L<http://egg.bomcity.com/>E<gt>, All Rights Reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.6 or,

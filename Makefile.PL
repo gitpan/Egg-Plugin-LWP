@@ -3,7 +3,7 @@ name 'Egg-Plugin-LWP';
 all_from 'lib/Egg/Plugin/LWP.pm';
 version_from 'lib/Egg/Plugin/LWP.pm';
 
-requires 'Egg::Release' => 2.00;
+requires 'Egg::Release' => 3.00;
 
 build_requires 'Test::More';
 build_requires 'Test::Pod';

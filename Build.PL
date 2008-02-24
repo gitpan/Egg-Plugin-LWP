@@ -7,7 +7,7 @@ my $builder = Module::Build->new(
   dist_version_from=> 'lib/Egg/Plugin/LWP.pm',
   requires => {
 
-    'Egg::Release' => 2.00,
+    'Egg::Release' => 3.00,
 
     'Test::More'           => 0,
     'Test::Pod'            => 0,
