@@ -2,12 +2,12 @@ package Egg::Plugin::LWP;
 #
 # Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
 #
-# $Id: LWP.pm 273 2008-02-24 07:11:31Z lushe $
+# $Id: LWP.pm 319 2008-04-17 12:20:20Z lushe $
 #
 use strict;
 use warnings;
 
-our $VERSION = '3.00';
+our $VERSION = '3.01';
 
 sub _setup {
 	my($e)= @_;
@@ -52,6 +52,10 @@ sub _get_args {
 	my $url = shift || die qq{ I want 'url' };
 	($self, $meth, $url, ($_[1] ? {@_}: ($_[0] || {})));
 }
+
+1;
+
+__END__
 
 =head1 NAME
 
@@ -163,4 +167,3 @@ at your option, any later version of Perl 5 you may have available.
 
 =cut
 
-1;

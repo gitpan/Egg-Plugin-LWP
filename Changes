@@ -1,5 +1,8 @@
 Revision history for Perl extension Egg::Plugin::LWP.
 
+3.01  2008/04/17
+	- Build.PL is abolished.
+
 3.00  2008/02/24
 	- Corresponded to Egg::Release v3.00.
 
